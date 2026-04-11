@@ -18,7 +18,7 @@ const generateDates = (days = 7) =>
   });
 
 export default function ShowtimesSection({ movieId, location }) {
-  const navigate = useNavigate(); // ✅ inside component
+  const navigate = useNavigate(); 
 
   const safeLocation =
     typeof location === "string" && location !== "null"
@@ -123,7 +123,7 @@ export default function ShowtimesSection({ movieId, location }) {
                   >
                     <div>{dayjs(show.startTime).format("hh:mm A")}</div>
                     <div className="text-[10px] text-gray-500">
-                      {show.format} • Rs. {show.price || 300}
+                      {show.format}
                     </div>
                   </button>
                 );

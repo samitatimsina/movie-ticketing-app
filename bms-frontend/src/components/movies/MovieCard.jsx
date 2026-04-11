@@ -8,10 +8,10 @@ const MovieCard = ({ movie }) => {
   if (!movie) return null;
 
   const handleClick = () => {
-    const slug = movie.title?.toLowerCase().replace(/\s+/g, "-");
+    const slug = movie?.title?.toLowerCase().replace(/\s+/g, "-");
 
     navigate(
-      `/movies/koshi province/${slug}/${movie._id}/ticket`
+      `/movies/koshi province/${slug}/${movie?._id}/ticket`
     );
   };
 
@@ -21,18 +21,21 @@ const MovieCard = ({ movie }) => {
       className='w-40 md:52 cursor-pointer'
     >
       <img
-        src={movie.img || '/placeholder.png'}
-        alt={movie.title || 'No title'}
-        className='rounded-lg shadow-md'
-      />
-      <p className='mt-2 font-medium'>{movie.title || 'No title'}</p>
+  src={
+    movie?.posterUrl
+    || "/placeholder.png"
+  }
+  alt={movie?.title || 'No title'}
+  className='rounded-lg shadow-md'
+/>
+      <p className='mt-2 font-medium'>{movie?.title || 'No title'}</p>
       <p className='text-xs text-gray-500'>
-        {movie.rating || 'N/A'} | {movie.votes || 'N/A'}
+        {movie?.rating || 'N/A'} | {movie?.votes || 'N/A'}
       </p>
-      <p className='text-sm text-gray-600'>{movie.age || 'N/A'}</p>
+      <p className='text-sm text-gray-600'>{movie?.age || 'N/A'}</p>
       <p className='text-sm text-gray-500 truncate'>
-        {Array.isArray(movie.languages)
-          ? movie.languages.join(" | ")
+        {Array.isArray(movie?.languages)
+          ? movie?.languages.join(" | ")
           : 'N/A'}
       </p>
     </div>

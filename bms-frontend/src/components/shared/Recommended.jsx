@@ -37,7 +37,6 @@ const Recommended = () => {
     if(isError){
         console.log("something went wrong");
     }
-    console.log(recMovies);
 
   return (
     <div className='w-full py-6 bg-white'>

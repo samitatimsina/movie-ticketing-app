@@ -6,7 +6,7 @@ const MovieList = ({allMovies}) => {
   return (
     <div className='w-full md:w-3/4 p-4'>
       <div className='flex flex-wrap gap-2 mb-4'>
-        {languages.map((lang, i) => (
+        {languages?.map((lang, i) => (
           <span
             key={i}
             className='bg-white border-gray-200 text-[#f74362] px-2 py-1 rounded-[2px] text-sm cursor-pointer hover:bg-gray-100'
@@ -21,7 +21,7 @@ const MovieList = ({allMovies}) => {
       </div>
 
       <div className='flex flex-wrap gap-6'>
-        {allMovies.map((movie, i) => (
+        {allMovies?.map((movie, i) => (
           <MovieCard key={i} movie={movie} />
         ))}
       </div>

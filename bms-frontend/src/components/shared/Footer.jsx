@@ -19,11 +19,16 @@ const Footer = () => {
         </div>
         {/*Social icons */}
         <div className="flex space-x-4 justify-center cursor-pointer">
-          <FaFacebook className="w-8 h-8 p-2 rounded-full bg-gray-700 text-white" />
-          <FaTwitter className="w-8 h-8 p-2 rounded-full bg-gray-700 text-white" />
-          <FaInstagram className="w-8 h-8 p-2 rounded-full bg-gray-700 text-white" />
-          <FaYoutube className="w-8 h-8 p-2 rounded-full bg-gray-700 text-white" />
-          <FaLinkedin className="w-8 h-8 p-2 rounded-full bg-gray-700 text-white" />
+          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
+          <FaFacebook className="w-8 h-8 p-2 rounded-full bg-gray-700 text-white" /></a>
+          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
+          <FaTwitter className="w-8 h-8 p-2 rounded-full bg-gray-700 text-white" /></a>
+          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
+          <FaInstagram className="w-8 h-8 p-2 rounded-full bg-gray-700 text-white" /></a>
+          <a href="https://youtube.com" target="_blank" rel="noopener noreferrer">
+          <FaYoutube className="w-8 h-8 p-2 rounded-full bg-gray-700 text-white" /></a>
+            <a href="https://www.linkedin.com/in/samita-timsina-58b27a3ab/" target="_blank" rel="noopener noreferrer">
+          <FaLinkedin className="w-8 h-8 p-2 rounded-full bg-gray-700 text-white" /></a>
         </div>
 
         {/*Copyright */}

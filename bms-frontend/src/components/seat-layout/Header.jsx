@@ -10,7 +10,6 @@ const Header = ({showData, type}) => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
 const [showDropdown, setShowDropdown] = useState(false);
-    console.log(showData);
   return (
   <>
       <div className='border-b border-gray-200 shadow-sm bg-white'>

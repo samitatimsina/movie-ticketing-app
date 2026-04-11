@@ -8,7 +8,7 @@ import axios from "axios";
 import { useAuth } from "../../context/useAuth";
 import { FaUserCircle } from "react-icons/fa";
 
-const Header = () => {
+const Header = ({onSearch}) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -26,6 +26,7 @@ const Header = () => {
         setShowDropdown(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -35,11 +36,13 @@ const Header = () => {
     const fetchMovies = async () => {
       try {
         const res = await axios.get("http://localhost:9000/api/v1/movies");
-        setMovies(res.data.movies || []);
+
+        setMovies(res.data?.data?.movies || res.data?.movies || []);
       } catch (err) {
         console.error("Failed to fetch movies for search", err);
       }
     };
+
     fetchMovies();
   }, []);
 
@@ -48,13 +51,15 @@ const Header = () => {
     if (!trimmedQuery) return;
 
     const matchedMovie = Array.isArray(movies)
-      ? movies.find(
-          (movie) => movie.title.toLowerCase() === trimmedQuery.toLowerCase()
+      ? movies.find((movie) =>
+          movie?.title?.toLowerCase().includes(trimmedQuery.toLowerCase())
         )
       : null;
 
-    if (matchedMovie) navigate(`/movies/${matchedMovie._id}`);
-    else navigate(`/movies?search=${encodeURIComponent(trimmedQuery)}`);
+    if (matchedMovie) {
+      navigate(`/movies/${matchedMovie._id}`);
+    } else {
+    onSearch(trimmedQuery);    }
 
     setSearchQuery("");
   };
@@ -66,7 +71,7 @@ const Header = () => {
         <div className="max-w-screen-xl mx-auto py-3">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
 
-            {/* Left: Logo + Search */}
+            {/* Left */}
             <div className="flex flex-1 min-w-0 gap-3 items-center">
               <img
                 src={mainLogo}
@@ -84,11 +89,15 @@ const Header = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
-                <FaSearch className="absolute right-2 top-3 text-gray-500 text-xs" />
+
+                <FaSearch
+                  className="absolute right-2 top-3 text-gray-500 text-xs cursor-pointer"
+                  onClick={handleSearch}
+                />
               </div>
             </div>
 
-            {/* Right: Location + Profile */}
+            {/* Right */}
             <div className="flex items-center gap-4 mt-2 md:mt-0 flex-shrink-0">
               {location && (
                 <div className="flex items-center gap-2 text-sm font-medium cursor-pointer shrink-0">
@@ -108,7 +117,9 @@ const Header = () => {
 
                     {showDropdown && (
                       <div className="absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow-lg z-50">
-                        <p className="px-4 py-2 text-sm border-b">{user?.name}</p>
+                        <p className="px-4 py-2 text-sm border-b">
+                          {user?.name}
+                        </p>
 
                         <button
                           className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
