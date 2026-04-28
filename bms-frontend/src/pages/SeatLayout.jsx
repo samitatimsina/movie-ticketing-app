@@ -61,17 +61,25 @@ const SeatLayout = () => {
 
       setSelectedSeats((prev) => {
         const exists = prev.find((s) => s.id === seatId);
-        if (exists) {
-          return prev.filter((s) => s.id !== seatId);
-        } else {
-          return [...prev, { ...seatObj, id: seatId }];
-        }
+       if (exists) {
+      socket.emit("unlock-seats", {
+        showId,
+        seatIds: [seatId],
+        userId: socket.id,
       });
 
-      socket.emit("lock-seats", { showId, seatIds: [seatId] });
-    },
-    [showId, setSelectedSeats]
-  );
+      return prev.filter((s) => s.id !== seatId);
+    }
+
+    socket.emit("lock-seats", {
+      showId,
+      seatIds: [seatId],
+      userId: socket.id,
+    });
+
+    return [...prev, { ...seatObj, id: seatId }];
+  });
+}, [showId,setSelectedSeats]);
 
   /* Socket Logic */
   useEffect(() => {

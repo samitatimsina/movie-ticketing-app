@@ -15,6 +15,8 @@ import PaymentTestPage from "./pages/payment/test";
 import PaymentSuccess from "./pages/payment/PaymentSuccess";
 import PaymentFail from "./pages/payment/PaymentFailure";
 import BookingHistory from "./components/profile/BookingHistory";
+import { useEffect } from "react";
+import socket from "./utils/socket";
 
 function App() {
 
@@ -24,6 +26,24 @@ function App() {
   );
 
   const isCheckoutPage = useMatch("/shows/:showId/:state/checkout");
+
+  useEffect(() => {
+    socket.connect();
+
+    console.log("Socket Connected");
+    socket.on("connect", () => {
+      console.log("Connected:", socket.id);
+    });
+    socket.on("disconnect",()=> {
+      console.log("Disconnected");
+    });
+
+    return() => {
+      socket.off("connect");
+      socket.off("disconnect");
+      socket.disconnect();
+    };
+  },[]);
 
   return (
     <>

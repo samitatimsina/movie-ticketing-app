@@ -4,7 +4,8 @@ import { registerSocketHandlers } from "./socketHandlers";
 export const initSocket = (server: any) => {
   const io = new Server(server, {
     cors: {
-      origin: "*", // adjust in production
+      origin: "http://localhost:5173",
+      methods:["GET","POST"]
     },
   });
 
