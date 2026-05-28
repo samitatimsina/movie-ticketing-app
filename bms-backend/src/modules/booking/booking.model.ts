@@ -1,33 +1,60 @@
+
+
 import mongoose from "mongoose";
 
 const bookingSchema = new mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
-    show: { type: mongoose.Schema.Types.ObjectId, ref: "Show", required: true },
+    movie: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Movie",
+      required: true,
+    },
 
-    seats: [{ type: String, required: true }],
+    show: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Show",
+      required: true,
+    },
 
-    totalAmount: { type: Number, required: true },
+    theater: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Theater",
+      required: true,
+    },
 
-    // extra fields for frontend
-    ticket: { type: Number, default: 0 },
-    fee: { type: Number, default: 0 },
-    paymentMethod: { type: String, default: "Esewa" },
+    seats: [String],
 
-    status: {
+    totalAmount: Number,
+
+    bookingStatus: {
       type: String,
-      enum: ["pending", "paid"],
-      default: "pending",
+      enum: ["pending", "confirmed", "cancelled"],
+      default: "confirmed",
     },
 
     paymentStatus: {
       type: String,
-      enum: ["pending", "completed", "failed"],
-      default: "pending",
+      enum: ["pending", "paid"],
+      default: "paid",
+    },
+
+    bookingId: {
+      type: String,
+      unique: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-export const BookingModel = mongoose.model("Booking", bookingSchema);
+export const BookingModel = mongoose.model(
+  "Booking",
+  bookingSchema
+);

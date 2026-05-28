@@ -1,34 +1,34 @@
-import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-
-// Extend Request type to include user
-declare global {
-  namespace Express {
-    interface Request {
-      user?: any;
-    }
-  }
-}
+import { config } from "../config/config";
+import { Request, Response, NextFunction } from "express";
 
 export const verifyUser = (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const authHeader = req.headers.authorization;
+  try {
+    console.log("Cookies:", req.cookies);
+    console.log("Headers:", req.headers.authorization);
 
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            res.status(401).json({ success: false, message: "Unauthorized: No token provided" 
-            });
-            return;
-        }
+    const token =
+      req.cookies?.accessToken ||
+      req.headers.authorization?.split(" ")[1];
 
-        const token = authHeader.split(' ')[1];
-
-        const secret = process.env.JWT_SECRET || "your_secret_key"; // put a strong secret in .env
-        const decoded = jwt.verify(token, secret) as {id:string};
-
-        req.user = decoded; // attach user info to request
-        next();
-    } catch (error) {
-     res.status(401).json({ success: false, message: "Unauthorized: Invalid token" });
-     return;
+    if (!token) {
+       res.status(401).json({
+        success: false,
+        message: "Unauthorized: No token provided",
+      });
+      return;
     }
+
+    const decoded = jwt.verify(token, config.accessTokenSecret);
+
+    req.user = decoded;
+
+    next();
+  } catch (error) {
+     res.status(401).json({
+      success: false,
+      message: "Unauthorized: Invalid token",
+    });
+    return;
+  }
 };

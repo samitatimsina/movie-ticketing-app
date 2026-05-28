@@ -1,67 +1,66 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/useAuth";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-const SignIn = () => {
+const SignUp = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { login } = useAuth();
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const searchParams = new URLSearchParams(location.search);
-  const redirectTo = searchParams.get("redirect") || "/";
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  if (!email || !password) {
-    toast.error("Please fill all fields");
-    return;
-  }
-
-  try {
-    const res = await fetch("http://localhost:9000/api/v1/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include", // 🔥 important for cookie auth
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      toast.error(data.message || "Login failed");
+    if (!name || !email || !password) {
+      toast.error("Please fill all fields");
       return;
     }
 
-    // backend returns user
-    // save user in context
-login(data.user);
+    try {
+      setLoading(true);
 
-// save token if backend sends it
-if (data.token) {
-  localStorage.setItem("token", data.token);
-}
+      const res = await fetch("http://localhost:9000/api/v1/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+        }),
+      });
 
-toast.success("Signed in successfully!");
+      const data = await res.json();
 
-// redirect
-navigate(redirectTo, { replace: true });
+      if (!res.ok) {
+        toast.error(data.message || "Signup failed");
+        return;
+      }
 
-  } catch (error) {
-    toast.error("Server error. Please try again.");
-    console.error(error);
-  }
-};
+      toast.success("Account created successfully!");
+
+      // auto login user after signup
+      login(data.user);
+
+      navigate("/");
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Server error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-[#f8f5f0]">
-      
+
       {/* Card */}
       <form
         onSubmit={handleSubmit}
@@ -74,11 +73,28 @@ navigate(redirectTo, { replace: true });
       >
         {/* Title */}
         <h2 className="text-3xl font-bold text-center text-black">
-          Welcome Back
+          Create Account
         </h2>
+
         <p className="text-center text-gray-500 text-sm">
-          Sign in to continue your booking
+          Sign up to start booking movies
         </p>
+
+        {/* Name */}
+        <div>
+          <label className="text-sm text-gray-700 block mb-1">Name</label>
+          <input
+            type="text"
+            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg 
+            border border-gray-300 
+            bg-[#fafafa] 
+            focus:outline-none focus:ring-2 focus:ring-black
+            transition"
+          />
+        </div>
 
         {/* Email */}
         <div>
@@ -115,22 +131,23 @@ navigate(redirectTo, { replace: true });
         {/* Button */}
         <button
           type="submit"
+          disabled={loading}
           className="w-full py-3 rounded-lg font-semibold 
           bg-black text-white 
           hover:bg-gray-900 
-          transition-all duration-300 shadow-md"
+          transition-all duration-300 shadow-md disabled:opacity-60"
         >
-          Sign In
+          {loading ? "Creating account..." : "Sign Up"}
         </button>
 
         {/* Footer */}
         <p className="text-center text-gray-500 text-sm">
-          Don’t have an account?{" "}
+          Already have an account?{" "}
           <span
-            onClick={() => navigate("/signup")}
+            onClick={() => navigate("/signin")}
             className="text-black font-medium hover:underline cursor-pointer"
           >
-            Sign Up
+            Sign In
           </span>
         </p>
       </form>
@@ -138,4 +155,4 @@ navigate(redirectTo, { replace: true });
   );
 };
 
-export default SignIn;
+export default SignUp;

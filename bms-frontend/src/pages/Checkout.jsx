@@ -84,7 +84,7 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen w-full bg-white">
-      <Header />
+      {/* <Header /> */}
       <div className="max-w-6xl mx-auto px-4 py-6">
         <p className="text-red-500 text-center mb-3 text-lg border rounded-[14px] border-dashed py-2 font-semibold">
           Time left: {String(Math.floor(timeLeft / 60)).padStart(2, "0")}:

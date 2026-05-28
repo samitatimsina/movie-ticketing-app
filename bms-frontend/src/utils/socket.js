@@ -3,7 +3,11 @@ import { io } from "socket.io-client";
 // Make sure this matches your backend port
 export const socket = io("http://localhost:9000", {
   autoConnect:false,
-  transports: ["websocket", "polling"]
+  transports: ["websocket", "polling"],
+  withCredentials:true,
+  auth: {
+    token:localStorage.getItem("token"),
+  }
 });
 
 export default socket;

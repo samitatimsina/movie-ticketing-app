@@ -64,9 +64,12 @@ export const activateUser = async (
 ): Promise<void> => {
   try {
     const userId = req.params.id;
-    const updateData = { ...req.body, isActive: true };
-    const updatedUser = await UserService.activateUser(userId, updateData);
-
+    const updateData = { ...req.body, activateUser: true };
+const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
+      { activateUser: true },
+      { new: true }
+    );
     if (!updatedUser) {
       res.status(404).json({ success: false, message: "User not found" });
       return;
@@ -85,7 +88,7 @@ export const updateUserProfile = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = req.user?.id;
+    const userId = req.user?._id;
     if (!userId) {
       res.status(401).json({ message: "Unauthorized" });
       return;
@@ -127,7 +130,12 @@ export const verifyUser: RequestHandler = (req, res, next): void => {
 
   try {
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-    req.user = decoded;
+
+    req.user = {
+      _id: decoded._id,
+      email: decoded.email,
+      role: decoded.role,
+    };
     next(); // ✅ only call once
   } catch (err) {
     res.status(401).json({ message: "Invalid token" });
@@ -152,6 +160,9 @@ export const getUserProfile = async (
       res.status(404).json({ success: false, message: "User not found" });
       return;
     }
+    if (!user.activateUser) {
+  throw new Error("User not activated");
+}
 
     res.status(200).json({ success: true, data: user });
   } catch (error) {

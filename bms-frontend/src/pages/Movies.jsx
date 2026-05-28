@@ -29,26 +29,33 @@ const Movies = () => {
   console.log(allMovies);
   const movies = allMovies?.data?.movies || [];
 
+  console.log(typeof movies[0]?.language, movies[0]?.language);
+
   const filteredMovies = movies.filter((movie)=> {
-    const matchLanguage = 
-    filters.languages?.length === 0 ||
-    filters.languages?.includes(movie?.language);
+   const matchLanguage =
+  !filters.languages.length ||
+  movie.languages?.some(lang =>
+    filters.languages
+      .map(l => l.toLowerCase())
+      .includes(lang.toLowerCase())
+  );
+    // const matchGenre = filters.genres?.length === 0 ||
+    // filters.genres?.includes(movie?.genre);
 
-    const matchGenre = filters.genres?.length === 0 ||
-    filters.genres?.includes(movie?.genre);
+    // const matchFormat =
+    //   filters.formats?.length === 0 ||
+    //   filters.formats?.includes(movie.format);
 
-    const matchFormat =
-      filters.formats.length === 0 ||
-      filters.formats.includes(movie.format);
-
-    return matchLanguage && matchGenre && matchFormat;
+    return matchLanguage;
+    //  && matchGenre && matchFormat;
+    
   });
   return (
     <div>
         <BannerSlider />
         <div className='flex flex-col md:flex-row bg-[#f5f5f5] min-h-screen
         md:px-[100px] pb-10 pt-8'>
-            <MovieFilters onFilterChnage = {setFilters} />
+            <MovieFilters onFilterChange = {setFilters} />
             <MovieList  allMovies={filteredMovies}/>
         </div>
     </div>

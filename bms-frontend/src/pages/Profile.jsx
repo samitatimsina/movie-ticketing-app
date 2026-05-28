@@ -19,7 +19,8 @@ const Profile = () => {
     const fetchProfile = async () => {
       try {
         const res = await fetch("/api/v1/user/profile", {
-          headers: { Authorization: `Bearer ${token}` ,},
+          credentials:"include",
+          // headers: { Authorization: `Bearer ${token}` ,},
         });
         const data = await res.json();
         if (data?.data) {
@@ -46,10 +47,11 @@ const Profile = () => {
     try {
       const res = await fetch("/api/v1/user/profile", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        credentials:"include",
+        // headers: {
+        //   "Content-Type": "application/json",
+        //   Authorization: `Bearer ${token}`,
+        // },
         body: JSON.stringify(formData),
       });
       const data = await res.json();

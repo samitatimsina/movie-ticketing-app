@@ -10,7 +10,7 @@ const Home = () => {
   const { data: searchResults, isLoading, error } = useQuery({
   queryKey: ["search", searchQuery],
   queryFn: () => searchMovies(searchQuery),
-  enabled: !!searchQuery, // only fetch when query is not empty
+  enabled: !!searchQuery,
 });
   return (
     <div>

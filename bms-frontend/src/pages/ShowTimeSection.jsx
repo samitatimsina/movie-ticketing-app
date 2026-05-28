@@ -37,7 +37,7 @@ export default function ShowtimesSection({ movieId, location }) {
         safeLocation,
         selectedFullDate
       );
-      return res.data || [];
+       return res?.data ?? [];
     },
     enabled: !!movieId && !!safeLocation,
   });

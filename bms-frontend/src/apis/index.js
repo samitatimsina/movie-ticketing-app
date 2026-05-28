@@ -19,7 +19,7 @@ export const rateMovie = (movieId, rating) =>
   axiosWrapper.post("/movies/rate", { movieId, rating });
 export const getBanners = async () => {
   const res = await axios.get("http://localhost:9000/api/v1/banners");
-  return res.data;
+   res.data;
 };
 export const searchMovies = async (query) => {
   const { data } = await axios.get(`/api/movies?search=${query}`);

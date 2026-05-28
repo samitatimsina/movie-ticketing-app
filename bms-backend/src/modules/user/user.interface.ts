@@ -10,4 +10,7 @@ export interface IUser{
     activateUser?:boolean;
     createdAt:Date;
     updatedAt:Date;
+    password?:string;
+    save:true;
+    token?:string,
 }

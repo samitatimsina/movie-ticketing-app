@@ -4,6 +4,7 @@ import { languages } from "../../utils/constants";
 const MovieFilters = ({ onFilterChange }) => {
 
   const [selectedLang, setSelectedLang] = useState([]);
+  // const movies = useState();
 
   const toggleLanguage = (lang) => {
 
@@ -19,6 +20,9 @@ const MovieFilters = ({ onFilterChange }) => {
       languages: updated
     }));
   };
+//     movies.forEach(movie => {
+//   console.log("Movie language:", movie.language);
+// });
 
   const clearLanguages = () => {
     setSelectedLang([]);
@@ -50,7 +54,7 @@ const MovieFilters = ({ onFilterChange }) => {
           {languages.map((lang, i) => (
             <span
               key={i}
-              onClick={() => toggleLanguage(lang)}   // ✅ ADD CLICK
+              onClick={() => toggleLanguage(lang)}  
               className={`border px-3 py-1 text-sm rounded cursor-pointer transition
                 ${
                   selectedLang.includes(lang)
@@ -66,14 +70,14 @@ const MovieFilters = ({ onFilterChange }) => {
       </div>
 
       {/* placeholders (unchanged) */}
-      <div className='bg-white mt-3 p-4 rounded'>
+      {/* <div className='bg-white mt-3 p-4 rounded'>
         <div className='flex justify-between items-center mb-2'>
           <span className='font-medium'>Genres</span>
           <button className='text-[#f74366] cursor-pointer'>Clear</button>
         </div>
-      </div>
+      </div> */}
 
-      <div className='bg-white mt-3 p-4 rounded'>
+      {/* <div className='bg-white mt-3 p-4 rounded'>
         <div className='flex justify-between items-center mb-2'>
           <span className='font-medium'>Format</span>
           <button className='text-[#f74366] cursor-pointer'>Clear</button>
@@ -82,7 +86,7 @@ const MovieFilters = ({ onFilterChange }) => {
 
       <button className='w-full border border-[#f74362] text-[#f74362] py-1 rounded hover:text-white transition'>
         Browse Cinemas
-      </button>
+      </button> */}
 
     </div>
   );

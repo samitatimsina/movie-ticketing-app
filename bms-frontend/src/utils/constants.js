@@ -294,7 +294,7 @@ export const theatres = [
     name: "CINE DE CHEF",
     distance: "1.8 km",
     cancellation: "Non-cancellable",
-    img: cinepolis, // Make sure you have: `import cinepolis from "../assets/cinepolis.png"`
+    img: cinepolis,
     timings: [
       { time: "08:10 PM", label: "DOLBY 7.1" },
       { time: "11:30 PM", label: "DOLBY 7.1" },
@@ -335,7 +335,7 @@ export const ordersData = [
   }
 ];
 
-export const filters = ["2D", "3D", "Wheelchair Friendly", "Premium Seats", "Recliners", "IMAX", "PVR PXL", "4DX", "Laser", "Dolby Atmos"];
+export const filters = ["2D", "3D", "Wheelchair Friendly", "Premium Seats"];
 
 export const tabs = ["Profile", "Your Orders"];
 

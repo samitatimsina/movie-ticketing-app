@@ -17,6 +17,7 @@ import PaymentFail from "./pages/payment/PaymentFailure";
 import BookingHistory from "./components/profile/BookingHistory";
 import { useEffect } from "react";
 import socket from "./utils/socket";
+import SignUp from "./pages/SignUp";
 
 function App() {
 
@@ -65,6 +66,7 @@ function App() {
             <Route path="/seat-layout" element={<SeatLayout />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
             <Route path="/payment/test" element={<PaymentTestPage />} />
             <Route path="/payment/success" element={<PaymentSuccess />} />
             <Route path="/payment/fail" element={<PaymentFail />} />

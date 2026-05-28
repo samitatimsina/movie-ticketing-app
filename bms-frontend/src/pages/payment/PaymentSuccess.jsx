@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const PaymentSuccess = () => {
@@ -14,6 +14,16 @@ const PaymentSuccess = () => {
       navigate("/"); // redirect to homepage
     }, 1500);
   };
+  useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const bookingId = params.get("bookingId");
+
+  if (bookingId) {
+    fetch(`http://localhost:9000/booking/verify/${bookingId}`, {
+      method: "POST",
+    });
+  }
+}, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">

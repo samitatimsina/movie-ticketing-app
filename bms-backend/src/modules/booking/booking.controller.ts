@@ -1,14 +1,18 @@
 import { Request, Response, RequestHandler } from "express";
 import { BookingModel } from "./booking.model";
+import { markPaymentSuccess } from "./booking.service";
+import { sendTicketEmail } from "../../services/email.service";
+import { UserModel } from "../user/user.model";
 
-// CREATE
+// CREATE BOOKING
 export const createBooking: RequestHandler = async (req, res) => {
   try {
     console.log("Booking request body:", req.body);
-    const { showId, seats, totalAmount } = req.body;
 
+    const { showId, seats, totalAmount } = req.body;
     // @ts-ignore
     const userId = req.user?.id;
+    console.log("USER ID:", userId);
 
     if (!userId) {
       res.status(401).json({ message: "Unauthorized" });
@@ -17,6 +21,20 @@ export const createBooking: RequestHandler = async (req, res) => {
 
     if (!seats || seats.length === 0) {
       res.status(400).json({ message: "No seats selected" });
+      return;
+    }
+
+    const existingBooking = await BookingModel.findOne({
+      show: showId,
+      seats: { $in: seats },
+      paymentStatus: "completed",
+    });
+
+    if (existingBooking) {
+      res.status(400).json({
+        success: false,
+        message: "One or more seats already booked",
+      });
       return;
     }
 
@@ -37,36 +55,77 @@ export const createBooking: RequestHandler = async (req, res) => {
   }
 };
 
-// VERIFY
-export const verifyPayment: RequestHandler = async (req, res) => {
+// VERIFY PAYMENT (FIXED)
+export const verifyPayment = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { bookingId } = req.params;
 
-    await BookingModel.findByIdAndUpdate(bookingId, {
-      paymentStatus: "completed",
-      status: "paid",
-    });
+    // 1. update booking
+const booking = await BookingModel.findByIdAndUpdate(
+  bookingId,
+  {
+    paymentStatus: "completed",
+  },
+  { new: true }
+).populate({
+  path: "show",
+  populate: [
+    { path: "movie" },
+    { path: "theater" },
+  ],
+});
+    if (!booking) {
+      res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+      return;
+    }
+    console.log("Booking created successfully:", booking);
+
+    // 2. get user
+    const user = await UserModel.findById(booking.user);
+
+    // 3. send email
+    if (user?.email && booking?.show) {
+  const show: any = booking.show;
+
+  await sendTicketEmail({
+    to: user.email,
+    movie: show.movie?.title,
+    // theater?: show.theater?.name,
+    seats: booking.seats,
+    showTime: show.startTime,
+    bookingId: booking._id.toString(),
+  });
+}
 
     res.json({ success: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false });
   }
+  
 };
 
 // GET BOOKINGS
 export const getUserBookings: RequestHandler = async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const userId = (req as any).user?.id || (req as any).user?._id;
+
     const bookings = await BookingModel.find({
-      user: userId,
-      paymentStatus: "completed",
-    })
-      .populate({
-        path: "show",
-        populate: [{ path: "movie" }, { path: "theater" }],
-      })
-      .sort({ createdAt: -1 });
+  user: userId,
+    }).populate({
+      path: "show",
+      populate: [{ path: "movie" }, { path: "theater" }],
+    });
+    if (!userId) {
+   res.status(401).json({ message: "Unauthorized" });
+   return;
+}
 
     const formatted = bookings.map((b: any) => ({
       _id: b._id,
