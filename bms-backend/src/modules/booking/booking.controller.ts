@@ -3,7 +3,8 @@ import { BookingModel } from "./booking.model";
 import { markPaymentSuccess } from "./booking.service";
 import { sendTicketEmail } from "../../services/email.service";
 import { UserModel } from "../user/user.model";
-
+import Show from "../show/show.model";
+import axios from "axios";
 // CREATE BOOKING
 export const createBooking: RequestHandler = async (req, res) => {
   try {
@@ -23,12 +24,13 @@ export const createBooking: RequestHandler = async (req, res) => {
       res.status(400).json({ message: "No seats selected" });
       return;
     }
+    const seatIds = seats.map((s: any) => s.id);
 
-    const existingBooking = await BookingModel.findOne({
-      show: showId,
-      seats: { $in: seats },
-      paymentStatus: "completed",
-    });
+const existingBooking = await BookingModel.findOne({
+  show: showId,
+  paymentStatus: "completed",
+  "seats.id": { $in: seatIds },
+});
 
     if (existingBooking) {
       res.status(400).json({
@@ -38,12 +40,37 @@ export const createBooking: RequestHandler = async (req, res) => {
       return;
     }
 
-    const booking = await BookingModel.create({
-      user: userId,
-      show: showId,
-      seats,
-      totalAmount,
-    });
+    const show = await Show.findById(showId)
+  .populate("movie")
+  .populate("theater");
+
+if (!show) {
+  res.status(404).json({
+    success: false,
+    message: "Show not found",
+  });
+  return;
+}
+
+
+const booking = await BookingModel.create({
+  user: userId,
+  movie: show.movie._id,
+  theater: show.theater._id,
+  show: showId,
+  seats: seatIds,
+  totalAmount,
+
+  bookingStatus: "pending",
+  paymentStatus: "pending",
+
+  bookingId: `BOOK-${Date.now()}`,
+
+  expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+});
+console.log("SEATS TYPE:", typeof seats);
+console.log("IS ARRAY:", Array.isArray(seats));
+console.log("SEATS:", seats);
 
     res.json({
       success: true,
@@ -56,59 +83,36 @@ export const createBooking: RequestHandler = async (req, res) => {
 };
 
 // VERIFY PAYMENT (FIXED)
-export const verifyPayment = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const verifyPayment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { bookingId } = req.params;
 
-    // 1. update booking
-const booking = await BookingModel.findByIdAndUpdate(
-  bookingId,
-  {
-    paymentStatus: "completed",
-  },
-  { new: true }
-).populate({
-  path: "show",
-  populate: [
-    { path: "movie" },
-    { path: "theater" },
-  ],
-});
+    const booking = await BookingModel.findById(bookingId);
+
     if (!booking) {
-      res.status(404).json({
-        success: false,
-        message: "Booking not found",
-      });
+      res.status(404).json({ message: "Booking not found" });
       return;
     }
-    console.log("Booking created successfully:", booking);
 
-    // 2. get user
-    const user = await UserModel.findById(booking.user);
+    if (booking.paymentStatus === "completed") {
+      res.json({ success: true, message: "Already verified" });
+      return;
+    }
 
-    // 3. send email
-    if (user?.email && booking?.show) {
-  const show: any = booking.show;
+    // MOCK PAYMENT SUCCESS
+    booking.paymentStatus = "completed";
+    booking.bookingStatus = "confirmed";
 
-  await sendTicketEmail({
-    to: user.email,
-    movie: show.movie?.title,
-    // theater?: show.theater?.name,
-    seats: booking.seats,
-    showTime: show.startTime,
-    bookingId: booking._id.toString(),
-  });
-}
+    await booking.save();
 
-    res.json({ success: true });
+    res.json({
+      success: true,
+      message: "Mock payment verified successfully",
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ message: "Payment verification failed" });
   }
-  
 };
 
 // GET BOOKINGS
@@ -132,7 +136,7 @@ export const getUserBookings: RequestHandler = async (req, res) => {
       movie: b.show?.movie,
       theater: b.show?.theater,
       seats: b.seats,
-      quantity: b.seats.length,
+      quantity: b.seats?.length || 0,
       ticket: b.totalAmount,
       fee: 0,
       total: b.totalAmount,
@@ -152,22 +156,17 @@ export const getUserBookings: RequestHandler = async (req, res) => {
 export const proceedToEsewa: RequestHandler = async (req, res) => {
   const { bookingId, totalAmount } = req.body;
 
-  const esewaURL = "https://esewa.com.np/epay/main";
+  if (!bookingId || !totalAmount) {
+    res.status(400).json({ message: "Missing data" });
+    return;
+  }
 
-  const params = {
-    amt: totalAmount,
-    psc: 0,
-    pdc: 0,
-    tAmt: totalAmount,
-    pid: bookingId,
-    scd: "YOUR_MERCHANT_CODE",
-    su: `http://localhost:5173/payment/success?bookingId=${bookingId}`,
-    fu: `http://localhost:5173/payment/fail?bookingId=${bookingId}`,
-  };
+  // simulate "payment gateway redirect"
+  const mockUrl = `http://localhost:5173/payment/mock?bookingId=${bookingId}&amount=${totalAmount}`;
 
-  const queryString = Object.entries(params)
-    .map(([k, v]) => `${k}=${v}`)
-    .join("&");
-
-  res.redirect(`${esewaURL}?${queryString}`);
+  res.json({
+    success: true,
+    redirectUrl: mockUrl,
+    message: "Redirecting to mock payment gateway",
+  });
 };

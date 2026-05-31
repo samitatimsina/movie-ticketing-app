@@ -7,7 +7,6 @@ import Movie from "./movie.model";
 const router = express.Router();
 
 router.post('/',validate(MovieSchema), MovieController.createMovie);
-//router.post('/',MovieController.createMovie);
 router.get('/',MovieController.getMovies);
 router.get('/recommended',MovieController.getTopRecommendedMovies);
 router.get('/:id',MovieController.getMovieById);

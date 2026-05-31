@@ -15,15 +15,39 @@ const PaymentSuccess = () => {
     }, 1500);
   };
   useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const bookingId = params.get("bookingId");
+  const verifyPayment = async () => {
+    const params = new URLSearchParams(window.location.search);
 
-  if (bookingId) {
-    fetch(`http://localhost:9000/booking/verify/${bookingId}`, {
-      method: "POST",
-    });
-  }
+    const data = params.get("data");
+    const bookingId = params.get("bookingId");
+
+    if (!data || !bookingId) return;
+
+    const token = localStorage.getItem("accessToken");
+
+    const res = await fetch(
+      `http://localhost:9000/api/v1/booking/verify/${bookingId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials:"include",
+        body: JSON.stringify({ data }),
+      }
+    );
+
+    const result = await res.json();
+
+    if (!result.success) {
+      alert("Payment verification failed");
+    }
+  };
+
+  verifyPayment();
 }, []);
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">

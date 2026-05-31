@@ -16,35 +16,41 @@ import PaymentSuccess from "./pages/payment/PaymentSuccess";
 import PaymentFail from "./pages/payment/PaymentFailure";
 import BookingHistory from "./components/profile/BookingHistory";
 import { useEffect } from "react";
-import socket from "./utils/socket";
 import SignUp from "./pages/SignUp";
+import { io } from "socket.io-client";
+import axios from "axios";
+import PaymentPage from "./pages/payment/PaymentPage";
+
 
 function App() {
+  axios.defaults.withCredentials = true;
 
   //hide header/footer on seatlayout page
   const isSeatLayoutPage= useMatch(
     "/movies/:movieId/:movieName/:theater/:theaterId/show/:showId/:seat-layout"
   );
-
   const isCheckoutPage = useMatch("/shows/:showId/:state/checkout");
 
-  useEffect(() => {
-    socket.connect();
+  
 
-    console.log("Socket Connected");
-    socket.on("connect", () => {
-      console.log("Connected:", socket.id);
-    });
-    socket.on("disconnect",()=> {
-      console.log("Disconnected");
-    });
+useEffect(() => {
 
-    return() => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.disconnect();
-    };
-  },[]);
+  const socketInstance = io("http://localhost:9000", {
+    credentials: true,
+  });
+
+  socketInstance.on("connect", () => {
+    console.log("Connected:", socketInstance.id);
+  });
+
+  socketInstance.on("disconnect", () => {
+    console.log("Disconnected");
+  });
+
+  return () => {
+    socketInstance.disconnect();
+  };
+}, []);
 
   return (
     <>
@@ -70,6 +76,7 @@ function App() {
             <Route path="/payment/test" element={<PaymentTestPage />} />
             <Route path="/payment/success" element={<PaymentSuccess />} />
             <Route path="/payment/fail" element={<PaymentFail />} />
+            <Route path="/payment/:bookingId" element={<PaymentPage />} />
            </Routes>
         </main>
           {!isSeatLayoutPage && !isCheckoutPage && <Footer />}

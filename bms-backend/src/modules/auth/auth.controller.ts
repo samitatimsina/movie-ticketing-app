@@ -34,6 +34,7 @@ export const login = async (req: Request, res: Response) => {
       httpOnly: true,
       secure: false, // true in production
       sameSite: "lax",
+      path:"/",
       maxAge: 1000 * 60 * 60, // 1 hour
     });
 
@@ -153,6 +154,7 @@ export const verifyOTP = async (
       httpOnly: true,
       secure: false,
       sameSite: "lax",
+      path:"/",
       maxAge: 1000 * 60 * 60,
     });
 
@@ -160,6 +162,7 @@ export const verifyOTP = async (
       httpOnly: true,
       secure: false,
       sameSite: "lax",
+      path:"/",
       maxAge: 1000 * 60 * 60 * 24 * 7,
     });
 

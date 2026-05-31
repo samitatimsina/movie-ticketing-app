@@ -22,7 +22,7 @@ const PaymentTestPage = () => {
       <div className="bg-white shadow-lg rounded-lg max-w-md w-full">
         {/* Header */}
         <div className="bg-blue-600 text-white text-center py-4 rounded-t-lg font-semibold text-lg">
-          eSewa Payment Test
+          eSewa Payment
         </div>
 
         {/* Body */}
@@ -37,10 +37,6 @@ const PaymentTestPage = () => {
             <p className="text-sm text-gray-500">Amount</p>
             <p className="text-lg font-semibold text-green-600">Rs. {amount}</p>
           </div>
-
-          <p className="text-center text-gray-600 text-sm">
-            This is a mock payment page for testing purposes. Click the button to simulate payment success or failure.
-          </p>
 
           {/* Buttons */}
           <div className="flex flex-col gap-3 mt-4">
@@ -61,7 +57,7 @@ const PaymentTestPage = () => {
 
         {/* Footer */}
         <div className="bg-gray-50 text-center py-3 text-gray-500 text-sm rounded-b-lg">
-          Powered by Mock eSewa
+          eSewa
         </div>
       </div>
     </div>

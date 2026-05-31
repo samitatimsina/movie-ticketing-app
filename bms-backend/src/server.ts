@@ -7,7 +7,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { registerSocketHandlers } from "./socket/socketHandlers";
 import bookingRoutes from "./modules/booking/booking.route";
-
+import paymentRoutes from "./routes/payment.routes";
 const startServer = async () => {
   const port = config.port;
 
@@ -36,6 +36,7 @@ const startServer = async () => {
   app.use("/api/v1/shows", showRoutes);
   app.use("/api/v1/auth",authRoutes);
   app.use("/api/v1/booking", bookingRoutes);
+  app.use("/api/v1/payment", paymentRoutes);
 
   // Start server
   httpServer.listen(port, () => {

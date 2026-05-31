@@ -6,8 +6,6 @@ const BookingHistory = () => {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<any[]>([]);;
 
- const token = localStorage.getItem("token");
-
 useEffect(() => {
   const fetchBookings = async () => {
     try {
@@ -58,6 +56,7 @@ useEffect(() => {
           </p>
         ) : (
           bookings.map((order:any) => (
+            
             <div
               key={order._id}
               className="bg-white p-5 rounded-md mb-4 flex gap-5"
@@ -86,8 +85,20 @@ useEffect(() => {
                 </p>
 
                 <p className="text-sm text-gray-500 font-semibold">
-                  Amount: Rs {order.total}
+                  Amount: Rs {500}
                 </p>
+                <p className="text-sm font-semibold">
+            Payment: {"Success "}
+            <span
+              className={
+                order.paymentStatus === "completed"
+                  ? "text-green-600"
+                  : "text-red-500"
+              }
+            >
+              {order.paymentStatus}
+            </span>
+          </p>  
               </div>
             </div>
           ))

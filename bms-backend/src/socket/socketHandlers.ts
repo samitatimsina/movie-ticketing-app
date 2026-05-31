@@ -1,182 +1,226 @@
-import { Socket, Server } from "socket.io";
+import { Server, Socket } from "socket.io";
+import { BookingModel } from "../modules/booking/booking.model";
 
-/**
- * Seat lock structure:
- * showId -> (seatId -> { userId, expiresAt })
- */
-const seatLocks = new Map<
-  string,
-  Map<string, { userId: string; expiresAt: number }>
->();
+type SeatLock = {
+  userId: string;
+  expiresAt: number;
+};
 
+const seatLocks = new Map<string, Map<string, SeatLock>>();
 const LOCK_DURATION = 5 * 60 * 1000; // 5 minutes
 
+/**
+ * GLOBAL cleanup interval (IMPORTANT: not per socket)
+ */
+const startCleanup = (io: Server) => {
+  setInterval(() => {
+    const now = Date.now();
+
+    for (const [showId, showLocks] of seatLocks.entries()) {
+      const expired: string[] = [];
+
+      for (const [seatId, lock] of showLocks.entries()) {
+        if (lock.expiresAt <= now) {
+          showLocks.delete(seatId);
+          expired.push(seatId);
+        }
+      }
+
+      if (expired.length) {
+        io.to(showId).emit("seat-unlocked", {
+          showId,
+          seatIds: expired,
+        });
+
+        console.log("⏰ AUTO EXPIRED:", expired);
+      }
+
+      if (showLocks.size === 0) {
+        seatLocks.delete(showId);
+      }
+    }
+  }, 30000);
+};
+
+let cleanupStarted = false;
+
 export const registerSocketHandlers = (socket: Socket, io: Server) => {
-  const user = socket.data.user; // ✅ from auth middleware
+  if (!cleanupStarted) {
+    startCleanup(io);
+    cleanupStarted = true;
+  }
+
+  const user = socket.data.user;
 
   if (!user) {
-    console.log("❌ Unauthorized socket connection");
     socket.disconnect();
     return;
   }
 
+  const userId = String(user.id || user._id);
+  console.log("✅ Authenticated User:", userId);
+
   /**
-   * JOIN SHOW ROOM
+   * JOIN SHOW
    */
-  socket.on("join-show", ({ showId }: { showId: string }) => {
+  socket.on("join-show", async ({ showId }) => {
     if (!showId) return;
 
-    socket.join(showId);
-    socket.data.showId = showId;
+    const roomId = String(showId);
 
-    console.log(`✅ User ${user._id} joined show ${showId}`);
+    // leave previous room if exists
+    if (socket.data.showId && socket.data.showId !== roomId) {
+      socket.leave(socket.data.showId);
+    }
 
-    const showLocks = seatLocks.get(showId) || new Map();
+    socket.join(roomId);
+    socket.data.showId = roomId;
+
+    console.log(`🎬 User ${userId} joined show ${roomId}`);
+
+    let showLocks = seatLocks.get(roomId);
+    if (!showLocks) {
+      showLocks = new Map();
+      seatLocks.set(roomId, showLocks);
+    }
+
     const now = Date.now();
+    const activeLocks: string[] = [];
 
-    const activeLockedSeats: string[] = [];
-
-    // cleanup expired locks
     for (const [seatId, lock] of showLocks.entries()) {
-      if (lock.expiresAt > now) {
-        activeLockedSeats.push(seatId);
-      } else {
+      if (lock.expiresAt <= now) {
         showLocks.delete(seatId);
+      } else {
+        activeLocks.push(seatId);
       }
     }
 
-    seatLocks.set(showId, showLocks);
+    const completedBookings = await BookingModel.find({
+      show: roomId,
+      paymentStatus: "completed",
+    }).select("seats");
 
-    socket.emit("locked-seats-initials", {
-      seatIds: activeLockedSeats,
+    const bookedSeatIds = completedBookings.flatMap((b: any) =>
+      (b.seats || []).map((s: any) => s.id)
+    );
+
+    socket.emit("seat-sync", {
+      showId: roomId,
+      lockedSeats: activeLocks,
+      bookedSeats: bookedSeatIds,
     });
   });
 
   /**
-   * LOCK SEATS (SECURE)
+   * LOCK SEATS
    */
   socket.on(
     "lock-seats",
     ({ showId, seatIds }: { showId: string; seatIds: string[] }) => {
       if (!showId || !seatIds?.length) return;
 
-      const userId = user._id;
+      const roomId = String(showId);
 
-      let showLocks = seatLocks.get(showId);
+      let showLocks = seatLocks.get(roomId);
       if (!showLocks) {
         showLocks = new Map();
-        seatLocks.set(showId, showLocks);
+        seatLocks.set(roomId, showLocks);
       }
 
       const now = Date.now();
-      const unavailableSeats: string[] = [];
+      const alreadyLocked: string[] = [];
+      const allowedSeats: string[] = [];
 
-      // check conflicts
       for (const seatId of seatIds) {
         const lock = showLocks.get(seatId);
 
-        if (lock && lock.expiresAt > now) {
-          unavailableSeats.push(seatId);
+        if (lock && lock.expiresAt > now && lock.userId !== userId) {
+          alreadyLocked.push(seatId);
+        } else {
+          allowedSeats.push(seatId);
         }
       }
 
-      if (unavailableSeats.length > 0) {
-        socket.emit("seat-locked-failed", {
-          showId,
-          requested: seatIds,
-          alreadyLocked: unavailableSeats,
+      if (alreadyLocked.length) {
+        socket.emit("seat-lock-failed", {
+          showId: roomId,
+          alreadyLocked,
         });
         return;
       }
 
-      // lock seats
-      for (const seatId of seatIds) {
+      for (const seatId of allowedSeats) {
         showLocks.set(seatId, {
           userId,
           expiresAt: now + LOCK_DURATION,
         });
       }
 
-      io.to(showId).emit("seat-locked", {
-        showId,
-        seatIds,
+      io.to(roomId).emit("seat-locked", {
+        showId: roomId,
+        seatIds: allowedSeats,
         userId,
+        expiresAt: now + LOCK_DURATION,
       });
-
-      console.log(`🔒 User ${userId} locked seats:`, seatIds);
     }
   );
 
   /**
-   * UNLOCK SEATS (ONLY OWNER CAN UNLOCK)
+   * UNLOCK SEATS
    */
   socket.on(
     "unlock-seats",
     ({ showId, seatIds }: { showId: string; seatIds: string[] }) => {
       if (!showId || !seatIds?.length) return;
 
-      const userId = user._id;
-
-      const showLocks = seatLocks.get(showId);
+      const roomId = String(showId);
+      const showLocks = seatLocks.get(roomId);
       if (!showLocks) return;
 
-      const unlockedSeats: string[] = [];
+      const unlocked: string[] = [];
 
       for (const seatId of seatIds) {
         const lock = showLocks.get(seatId);
 
-        if (lock && lock.userId === userId) {
+        if (lock?.userId === userId) {
           showLocks.delete(seatId);
-          unlockedSeats.push(seatId);
+          unlocked.push(seatId);
         }
       }
 
-      if (unlockedSeats.length > 0) {
-        io.to(showId).emit("seat-unlocked", {
-          showId,
-          seatIds: unlockedSeats,
+      if (unlocked.length) {
+        io.to(roomId).emit("seat-unlocked", {
+          showId: roomId,
+          seatIds: unlocked,
           userId,
         });
-
-        console.log(`🔓 User ${userId} unlocked seats:`, unlockedSeats);
       }
     }
   );
 
   /**
-   * DISCONNECT HANDLING
+   * BOOKING CONFIRMED
    */
-  socket.on("disconnect", () => {
-    const showId = socket.data.showId;
-    const userId = user._id;
+  socket.on("booking-confirmed", ({ showId, seatIds }) => {
+    const roomId = String(showId);
 
-    console.log(`❌ User disconnected: ${userId} (${socket.id})`);
-
-    if (!showId) return;
-
-    const showLocks = seatLocks.get(showId);
-    if (!showLocks) return;
-
-    const seatsToUnlock: string[] = [];
-
-    for (const [seatId, lock] of showLocks.entries()) {
-      if (lock.userId === userId) {
-        seatsToUnlock.push(seatId);
+    const showLocks = seatLocks.get(roomId);
+    if (showLocks) {
+      for (const seatId of seatIds || []) {
         showLocks.delete(seatId);
       }
     }
 
-    if (seatsToUnlock.length > 0) {
-      io.to(showId).emit("seat-unlocked", {
-        showId,
-        seatIds: seatsToUnlock,
-        userId,
-      });
+    io.to(roomId).emit("booking-completed", {
+      showId: roomId,
+      seatIds,
+    });
+  });
 
-      console.log(
-        `♻️ Auto-unlocked seats for user ${userId}:`,
-        seatsToUnlock
-      );
-    }
+  /**
+   * DISCONNECT
+   */
+  socket.on("disconnect", () => {
+    console.log("❌ DISCONNECTED:", userId);
   });
 };

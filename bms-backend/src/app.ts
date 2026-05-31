@@ -11,7 +11,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: "http://localhost:5173",
     credentials: true,
   })
 );
@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //All routes
 app.use("/api/v1",router);
-app.use("/api/payment", paymentRouter);
+app.use("/api/v1/payment", paymentRouter);
 
 
 // Global error handler (MUST be after all routes)
@@ -31,6 +31,12 @@ app.get("/", (_, res) => {
   res.json({
     message: "Welcome to Movietickets API",
   });
+});
+app.get("/test-cookie", (req, res) => {
+  console.log("RAW HEADER COOKIE:", req.headers.cookie);
+  console.log("PARSED COOKIE:", req.cookies);
+
+  res.json({ cookies: req.cookies });
 });
 
 export default app;

@@ -1,28 +1,54 @@
 import { Router, Request, Response } from "express";
+import { BookingModel } from "../modules/booking/booking.model";
 
 const router = Router();
 
-// POST route for initiating payment
-router.post("/pay/esewa", (req: Request, res: Response): void => {
-  const { bookingId, totalAmount } = req.body as { bookingId: string; totalAmount: number };
-  if (!bookingId || !totalAmount) {
-    res.status(400).json({ message: "Booking ID and totalAmount are required" });
-    return;
-  }
+router.get("/:bookingId", (req: Request, res: Response) => {
+  const { bookingId } = req.params;
 
-  // Redirect to local test page instead of eSewa
-  res.redirect(`http://localhost:5173/payment/test?bookingId=${bookingId}&amount=${totalAmount}`);
+  const html = `
+  <html>
+    <body style="font-family:Arial;text-align:center;padding-top:50px">
+      <h2>Mock Payment Page</h2>
+
+      <form method="POST" action="/api/v1/payment/verify/${bookingId}">
+        <input type="text" placeholder="Card Number" required /><br/><br/>
+        <input type="text" placeholder="Name on Card" required /><br/><br/>
+        <input type="text" placeholder="Expiry Date" required /><br/><br/>
+        <input type="text" placeholder="CVV" required /><br/><br/>
+
+        <button type="submit" style="padding:10px 20px;background:green;color:white;">
+          Pay Now
+        </button>
+      </form>
+    </body>
+  </html>
+  `;
+
+  res.send(html);
 });
 
-// GET route to show mock payment page (for testing only)
-router.get("/payment/test", (req: Request, res: Response) => {
-  const { bookingId, amount } = req.query;
-  res.send(`
-    <h1>Payment Test Page</h1>
-    <p>Booking ID: ${bookingId}</p>
-    <p>Amount: ${amount}</p>
-    <a href="/">Go Back Home</a>
-  `);
+router.post("/verify/:bookingId", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { bookingId } = req.params;
+
+    const booking = await BookingModel.findById(bookingId);
+
+    if (!booking) {
+      res.status(404).send("Booking not found");
+      return;
+    }
+
+    booking.paymentStatus = "completed";
+    booking.bookingStatus = "confirmed";
+
+    await booking.save();
+
+    res.redirect("http://localhost:5173/booking-history");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Payment failed");
+  }
 });
 
 export default router;

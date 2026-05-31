@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { UserModel } from "../user/user.model";
+import { config } from "../../config/config";
 
 export const signupUser = async (payload: any) => {
   const { name, email, password } = payload;
@@ -52,16 +53,16 @@ export const loginUser = async (
   }
 
   const token = jwt.sign(
-    {
-      id: user._id,
-      email: user.email,
-      role:user.role,
-    },
-    process.env.JWT_SECRET!,
-    {
-      expiresIn: "1d",
-    }
-  );
+  {
+    id: user._id,
+    email: user.email,
+    role: user.role,
+  },
+  config.accessTokenSecret,
+  {
+    expiresIn: "1d",
+  }
+);
 
   return {
     token,

@@ -1,47 +1,41 @@
 import mongoose from "mongoose";
 import dayjs from "dayjs";
-
 import { config } from "../config/config";
 
 import { BookingModel } from "../modules/booking/booking.model";
 import { UserModel } from "../modules/user/user.model";
 import ShowModel from "../modules/show/show.model";
 
-const bookingStatuses = ["pending", "paid"];
-const paymentStatuses = ["pending", "completed"];
-
 const generateRandomSeats = () => {
   const rows = ["A", "B", "C", "D", "E"];
   const count = Math.floor(Math.random() * 3) + 1;
 
-  const seats: string[] = [];
+  const seats = [];
 
   for (let i = 0; i < count; i++) {
     const row = rows[Math.floor(Math.random() * rows.length)];
-    const num = Math.floor(Math.random() * 10) + 1;
+    const number = Math.floor(Math.random() * 10) + 1;
 
-    seats.push(`${row}${num}`);
+    seats.push({
+      row,
+      number,
+      type: "REGULAR",
+      price: 150,
+      id: `${row}${number}`,
+    });
   }
 
-  return [...new Set(seats)];
+  return seats;
 };
 
 export const seedBookings = async () => {
   const users = await UserModel.find();
   const shows = await ShowModel.find();
 
-  if (!users.length) {
-    console.log("❌ No users found.");
-    return;
-  }
+  if (!users.length || !shows.length) return;
 
-  if (!shows.length) {
-    console.log("❌ No shows found.");
-    return;
-  }
-
-  console.log(`👤 Users found: ${users.length}`);
-  console.log(`🎬 Shows found: ${shows.length}`);
+  console.log(`👤 Users: ${users.length}`);
+  console.log(`🎬 Shows: ${shows.length}`);
 
   for (const user of users) {
     const randomShows = shows
@@ -51,11 +45,10 @@ export const seedBookings = async () => {
     for (const show of randomShows) {
       const seats = generateRandomSeats();
 
-      // calculate total using REGULAR price
-      const seatPrice =
-        show.priceMap?.REGULAR || 150;
-
-      const totalAmount = seats.length * seatPrice;
+      const totalAmount = seats.reduce(
+        (sum, seat) => sum + seat.price,
+        0
+      );
 
       const alreadyExists = await BookingModel.findOne({
         user: user._id,
@@ -68,36 +61,25 @@ export const seedBookings = async () => {
 
       const booking = new BookingModel({
         user: user._id,
+        movie: show.movie,
         show: show._id,
+        theater: show.theater,
 
         seats,
 
         totalAmount,
 
-        ticket: totalAmount,
-        fee: 20,
+        bookingStatus: isPaid ? "confirmed" : "pending",
+        paymentStatus: isPaid ? "completed" : "pending",
 
-        paymentMethod: "Esewa",
-
-        status: isPaid ? "paid" : "pending",
-
-        paymentStatus: isPaid
-          ? "completed"
-          : "pending",
-
-        createdAt: dayjs()
-          .subtract(
-            Math.floor(Math.random() * 10),
-            "day"
-          )
+        expiresAt: dayjs()
+          .add(15, "minute")
           .toDate(),
       });
 
       await booking.save();
 
-      console.log(
-        `🎟️ Booking created for ${user.email}`
-      );
+      console.log(`🎟️ Booking created for ${user.email}`);
     }
   }
 
@@ -109,7 +91,6 @@ mongoose
   .then(async () => {
     console.log("✅ DB connected");
 
-    // optional cleanup
     await BookingModel.deleteMany({});
     console.log("🧹 Old bookings deleted");
 
@@ -119,6 +100,4 @@ mongoose
 
     console.log("✅ Done");
   })
-  .catch((err) => {
-    console.log(err);
-  });
+  .catch((err) => console.log(err));
