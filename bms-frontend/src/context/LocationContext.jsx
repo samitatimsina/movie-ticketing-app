@@ -1,6 +1,7 @@
 import { createContext,useContext, useState, useEffect  } from "react";
 
 const LocationContext = createContext();
+console.log("LOCATION:", location);
 
 export const LocationProvide = ({children})=>{
     const [location,setLocation] = useState(null);
@@ -36,6 +37,7 @@ export const LocationProvide = ({children})=>{
       setLoading(false);
     }
   };
+  console.log("LOCATION:", location);
 
   navigator.geolocation.getCurrentPosition(
     (position) => {

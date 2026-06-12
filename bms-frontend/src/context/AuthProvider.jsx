@@ -22,12 +22,11 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // LOGIN
-  const login = (userData) => {
-    setUser(userData);
-
-    // optional persistence
-    localStorage.setItem("user", JSON.stringify(userData));
-  };
+const login = (userData, token) => {
+  setUser(userData);
+  localStorage.setItem("user", JSON.stringify(userData));
+  localStorage.setItem("token", token);
+};
 
   // LOGOUT
   const logout = () => {

@@ -11,7 +11,6 @@ import toast from "react-hot-toast";
 import { socket } from "../utils/socket";
 import PaymentModal from "../components/PaymentModal";
 import {api} from "../../../bms-backend/src/api/axios";
-import axios from "axios";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -73,22 +72,39 @@ const Checkout = () => {
       </div>
     );
   }
+const handleCheckout = async () => {
+  const token = localStorage.getItem("accessToken");
+  console.log("FINAL TOTAL:", total);
+  try {
+    const res = await api.post(
+      "/booking/create",
+      {
+        showId: showData._id,
+        seats: selectedSeats,
+        totalAmount: total,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-  const handleCheckout = async () => {
-  const res = await api.post("/booking/create", {
-    showId: showData._id,
-    seats: selectedSeats,
-    amount: total,
-  });
+    const bookingId = res.data?.bookingId;
 
-  const bookingId = res.data.bookingId;
+    console.log("BOOKING RESPONSE:", res.data);
 
-  if (!bookingId) {
-    toast.error("Booking failed");
-    return;
+    if (!bookingId) {
+      toast.error("Booking failed");
+      return;
+    }
+
+    navigate(`/payment/mock?bookingId=${bookingId}&amount=${total}`);
+
+  } catch (err) {
+    console.log("ERROR RESPONSE:", err.response?.data);
+    toast.error("Checkout failed");
   }
-
-  navigate(`/payment/${bookingId}`);
 };
 
 

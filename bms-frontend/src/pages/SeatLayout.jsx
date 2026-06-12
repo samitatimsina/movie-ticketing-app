@@ -86,6 +86,13 @@ const SeatLayout = () => {
         socket.connect();
         await new Promise((res) => socket.once("connect", res));
       }
+      socket.on("connect", () => {
+  console.log("✅ SOCKET CONNECTED", socket.id);
+});
+
+socket.on("connect_error", (err) => {
+  console.log("❌ SOCKET ERROR:", err.message);
+});
 
       socket.emit("join-show", { showId });
     };
@@ -96,7 +103,7 @@ const SeatLayout = () => {
       socket.emit("join-show", { showId });
     };
 
-    socket.io.on("reconnect", handleReconnect);
+    socket.on("reconnect", handleReconnect);
 
     /**
      * INITIAL SYNC
@@ -110,6 +117,7 @@ const SeatLayout = () => {
      * REALTIME LOCK
      */
     const handleSeatLocked = ({ seatIds = [] }) => {
+       console.log("LOCK EVENT:", seatIds);
       setLockedSeats((prev) => [...new Set([...prev, ...seatIds])]);
     };
 
@@ -132,17 +140,30 @@ const SeatLayout = () => {
         prev.filter((id) => !seatIds.includes(id))
       );
     };
+    const handleSeatLockFailed = ({ alreadyLocked = [] }) => {
+  setPendingSeats((prev) =>
+    prev.filter((id) => !alreadyLocked.includes(id))
+  );
+
+  setSelectedSeats((prev) =>
+    prev.filter((seat) => !alreadyLocked.includes(seat.id))
+  );
+
+  toast.error("Seat already selected by another user");
+};
 
     socket.on("seat-sync", handleSeatSync);
     socket.on("seat-locked", handleSeatLocked);
     socket.on("seat-unlocked", handleSeatUnlocked);
     socket.on("booking-completed", handleBookingCompleted);
+    socket.on("seat-lock-failed", handleSeatLockFailed);
 
     return () => {
       socket.off("seat-sync", handleSeatSync);
       socket.off("seat-locked", handleSeatLocked);
       socket.off("seat-unlocked", handleSeatUnlocked);
       socket.off("booking-completed", handleBookingCompleted);
+      socket.off("seat-lock-failed", handleSeatLockFailed);
 
       socket.io.off("reconnect", handleReconnect);
     };
@@ -178,6 +199,7 @@ const SeatLayout = () => {
           showId,
           seatIds: [seatId],
         });
+        console.log("EMITTING LOCK", showId, seatId);
 
         return;
       }

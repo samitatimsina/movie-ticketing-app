@@ -8,6 +8,8 @@ import { Server } from "socket.io";
 import { registerSocketHandlers } from "./socket/socketHandlers";
 import bookingRoutes from "./modules/booking/booking.route";
 import paymentRoutes from "./routes/payment.routes";
+import { socketAuthMiddleware } from "./socket/socketAuth";
+
 const startServer = async () => {
   const port = config.port;
 
@@ -18,19 +20,28 @@ const startServer = async () => {
   const httpServer = createServer(app);
 
   // Setup Socket.IO
-  const io = new Server(httpServer, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST"],
-    },
-  });
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: false,
+  },
+  transports: ["polling","websocket"],
+});
+io.use(socketAuthMiddleware);
 
   // Use centralized socket handlers
-  io.on("connection", (socket) => {
-    console.log("🔌 Socket connected:", socket.id);
+io.on("connection", (socket) => {
+  console.log("TOKEN:", socket.handshake.auth?.token);
+  console.log("🔌 Socket connected:", socket.id);
 
-    registerSocketHandlers(socket, io);
+  registerSocketHandlers(socket, io);
+  console.log("🔥 registerSocketHandlers called");
+
+  socket.onAny((event, ...args) => {
+    console.log("EVENT:", event, args);
   });
+});
 
   // Routes
   app.use("/api/v1/shows", showRoutes);
@@ -45,3 +56,4 @@ const startServer = async () => {
 };
 
 startServer();
+

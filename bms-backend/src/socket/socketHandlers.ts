@@ -64,9 +64,11 @@ export const registerSocketHandlers = (socket: Socket, io: Server) => {
    * JOIN SHOW
    */
   socket.on("join-show", async ({ showId }) => {
+    console.log("JOIN SHOW RECEIVED", showId);
     if (!showId) return;
 
     const roomId = String(showId);
+    console.log("ROOM JOIN:", roomId);
 
     // leave previous room if exists
     if (socket.data.showId && socket.data.showId !== roomId) {
@@ -116,16 +118,34 @@ export const registerSocketHandlers = (socket: Socket, io: Server) => {
    */
   socket.on(
     "lock-seats",
-    ({ showId, seatIds }: { showId: string; seatIds: string[] }) => {
+    async({ showId, seatIds }: { showId: string; seatIds: string[] }) => {
+      console.log("🔥 LOCK REQUEST RECEIVED:", showId, seatIds, userId);
       if (!showId || !seatIds?.length) return;
 
       const roomId = String(showId);
+      const completedBookings = await BookingModel.find({
+  show: roomId,
+  paymentStatus: "completed",
+}).select("seats");
 
-      let showLocks = seatLocks.get(roomId);
-      if (!showLocks) {
-        showLocks = new Map();
-        seatLocks.set(roomId, showLocks);
-      }
+const bookedSeatIds = completedBookings.flatMap((b: any) =>
+  (b.seats || []).map((s: any) => s.id || s)
+);
+
+const alreadyBooked = seatIds.filter((id) =>
+  bookedSeatIds.includes(id)
+);
+
+if (alreadyBooked.length) {
+  socket.emit("seat-lock-failed", {
+    showId: roomId,
+    alreadyLocked: alreadyBooked,
+  });
+  return;
+}
+
+    const showLocks = seatLocks.get(roomId) || new Map();
+    seatLocks.set(roomId, showLocks);
 
       const now = Date.now();
       const alreadyLocked: string[] = [];
@@ -162,6 +182,7 @@ export const registerSocketHandlers = (socket: Socket, io: Server) => {
         userId,
         expiresAt: now + LOCK_DURATION,
       });
+      console.log("ROOM EMIT:", roomId);
     }
   );
 
@@ -224,3 +245,5 @@ export const registerSocketHandlers = (socket: Socket, io: Server) => {
     console.log("❌ DISCONNECTED:", userId);
   });
 };
+
+export {seatLocks};

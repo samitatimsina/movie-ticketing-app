@@ -11,10 +11,13 @@ const Home = () => {
   queryKey: ["search", searchQuery],
   queryFn: () => searchMovies(searchQuery),
   enabled: !!searchQuery,
+  
 });
   return (
     <div>
-
+       {/* Existing Sections */}
+      <BannerSlider />
+      <Recommended />
       {/* Search Results */}
       {searchQuery && (
         <div className="search-results" style={{ margin: "1rem 0" }}>
@@ -33,9 +36,7 @@ const Home = () => {
         </div>
       )}
 
-      {/* Existing Sections */}
-      <BannerSlider />
-      <Recommended />
+     
     </div>
   );
 };

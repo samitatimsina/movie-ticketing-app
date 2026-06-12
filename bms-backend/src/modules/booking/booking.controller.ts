@@ -1,89 +1,139 @@
-import { Request, Response, RequestHandler } from "express";
+import { RequestHandler } from "express";
 import { BookingModel } from "./booking.model";
-import { markPaymentSuccess } from "./booking.service";
-import { sendTicketEmail } from "../../services/email.service";
-import { UserModel } from "../user/user.model";
 import Show from "../show/show.model";
-import axios from "axios";
-// CREATE BOOKING
-export const createBooking: RequestHandler = async (req, res) => {
-  try {
-    console.log("Booking request body:", req.body);
+import mongoose from "mongoose";
+import { seatLocks } from "../../socket/socketHandlers"; // adjust path if needed
 
+export const createBooking: RequestHandler = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
     const { showId, seats, totalAmount } = req.body;
-    // @ts-ignore
+
     const userId = req.user?.id;
-    console.log("USER ID:", userId);
 
     if (!userId) {
+      await session.abortTransaction();
+      session.endSession();
       res.status(401).json({ message: "Unauthorized" });
       return;
     }
 
     if (!seats || seats.length === 0) {
+      await session.abortTransaction();
+      session.endSession();
       res.status(400).json({ message: "No seats selected" });
       return;
     }
+
     const seatIds = seats.map((s: any) => s.id);
+    // ===============================
+// SOCKET LOCK VALIDATION (IMPORTANT)
+// ===============================
+const showLocks = seatLocks.get(showId);
 
-const existingBooking = await BookingModel.findOne({
-  show: showId,
-  paymentStatus: "completed",
-  "seats.id": { $in: seatIds },
-});
+if (showLocks) {
+  const now = Date.now();
 
-    if (existingBooking) {
+  const lockedByOthers: string[] = [];
+
+  for (const seatId of seatIds) {
+    const lock = showLocks.get(seatId);
+
+    if (lock && lock.expiresAt > now && lock.userId !== userId) {
+      lockedByOthers.push(seatId);
+    }
+  }
+
+  if (lockedByOthers.length > 0) {
+    await session.abortTransaction();
+    session.endSession();
+
+     res.status(409).json({
+      success: false,
+      message: "Some seats are currently locked by another user",
+      seats: lockedByOthers,
+    });
+    return;
+  }
+}
+
+    // 🔥 STRONG CHECK (pending + completed both blocked)
+    const activeBooking = await BookingModel.findOne({
+      show: showId,
+      paymentStatus: { $in: ["pending", "completed"] },
+      "seats.id": { $in: seatIds },
+    }).session(session);
+
+    if (activeBooking) {
+      await session.abortTransaction();
+      session.endSession();
+
       res.status(400).json({
         success: false,
-        message: "One or more seats already booked",
+        message: "Seats already reserved",
       });
       return;
     }
 
     const show = await Show.findById(showId)
-  .populate("movie")
-  .populate("theater");
+      .populate("movie")
+      .populate("theater");
 
-if (!show) {
-  res.status(404).json({
-    success: false,
-    message: "Show not found",
-  });
-  return;
-}
+    if (!show) {
+      await session.abortTransaction();
+      session.endSession();
 
+      res.status(404).json({
+        success: false,
+        message: "Show not found",
+      });
+      return;
+    }
 
-const booking = await BookingModel.create({
-  user: userId,
-  movie: show.movie._id,
-  theater: show.theater._id,
-  show: showId,
-  seats: seatIds,
-  totalAmount,
+    // 🔥 CREATE BOOKING (inside transaction)
+    const [booking] = await BookingModel.create(
+      [
+        {
+          user: userId,
+          movie: (show as any).movie._id,
+          theater: (show as any).theater._id,
+          show: showId,
+          seats: seatIds,
+          totalAmount,
 
-  bookingStatus: "pending",
-  paymentStatus: "pending",
+          bookingStatus: "pending",
+          paymentStatus: "pending",
 
-  bookingId: `BOOK-${Date.now()}`,
+          bookingId: `BOOK-${Date.now()}`,
+          expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        },
+      ],
+      { session }
+    );
 
-  expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-});
-console.log("SEATS TYPE:", typeof seats);
-console.log("IS ARRAY:", Array.isArray(seats));
-console.log("SEATS:", seats);
+    await session.commitTransaction();
+    session.endSession();
 
     res.json({
       success: true,
       bookingId: booking._id,
+      totalAmount: booking.totalAmount,
     });
   } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+
     console.error(err);
     res.status(500).json({ success: false });
   }
 };
 
-// VERIFY PAYMENT (FIXED)
-export const verifyPayment = async (req: Request, res: Response): Promise<void> => {
+// ================================
+// VERIFY PAYMENT (MOCK)
+// ================================
+export const verifyPayment: RequestHandler = async (req, res) => {
   try {
     const { bookingId } = req.params;
 
@@ -99,7 +149,6 @@ export const verifyPayment = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // MOCK PAYMENT SUCCESS
     booking.paymentStatus = "completed";
     booking.bookingStatus = "confirmed";
 
@@ -108,6 +157,7 @@ export const verifyPayment = async (req: Request, res: Response): Promise<void> 
     res.json({
       success: true,
       message: "Mock payment verified successfully",
+      bookingId: booking._id,
     });
   } catch (err) {
     console.error(err);
@@ -115,21 +165,22 @@ export const verifyPayment = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// GET BOOKINGS
+// ================================
+// GET USER BOOKINGS
+// ================================
 export const getUserBookings: RequestHandler = async (req, res) => {
   try {
     const userId = (req as any).user?.id || (req as any).user?._id;
 
-    const bookings = await BookingModel.find({
-  user: userId,
-    }).populate({
+    if (!userId) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const bookings = await BookingModel.find({ user: userId }).populate({
       path: "show",
       populate: [{ path: "movie" }, { path: "theater" }],
     });
-    if (!userId) {
-   res.status(401).json({ message: "Unauthorized" });
-   return;
-}
 
     const formatted = bookings.map((b: any) => ({
       _id: b._id,
@@ -137,12 +188,15 @@ export const getUserBookings: RequestHandler = async (req, res) => {
       theater: b.show?.theater,
       seats: b.seats,
       quantity: b.seats?.length || 0,
+
       ticket: b.totalAmount,
-      fee: 0,
-      total: b.totalAmount,
+      totalAmount: b.totalAmount,
+
       bookingTime: b.createdAt,
-      paymentMethod: "Esewa",
       datetime: b.show?.startTime,
+
+      paymentStatus: b.paymentStatus,
+      bookingStatus: b.bookingStatus,
     }));
 
     res.json(formatted);
@@ -152,7 +206,9 @@ export const getUserBookings: RequestHandler = async (req, res) => {
   }
 };
 
-// ESEWA
+// ================================
+// MOCK ESEWA REDIRECT
+// ================================
 export const proceedToEsewa: RequestHandler = async (req, res) => {
   const { bookingId, totalAmount } = req.body;
 
@@ -161,12 +217,10 @@ export const proceedToEsewa: RequestHandler = async (req, res) => {
     return;
   }
 
-  // simulate "payment gateway redirect"
   const mockUrl = `http://localhost:5173/payment/mock?bookingId=${bookingId}&amount=${totalAmount}`;
 
   res.json({
     success: true,
     redirectUrl: mockUrl,
-    message: "Redirecting to mock payment gateway",
   });
 };

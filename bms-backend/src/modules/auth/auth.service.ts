@@ -63,6 +63,7 @@ export const loginUser = async (
     expiresIn: "1d",
   }
 );
+console.log("SECRET:", config.accessTokenSecret);
 
   return {
     token,

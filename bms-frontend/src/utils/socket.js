@@ -1,11 +1,13 @@
 import { io } from "socket.io-client";
-
+console.log(
+  "TOKEN:",
+  localStorage.getItem("accessToken")
+);
 export const socket = io("http://localhost:9000", {
   autoConnect: false,
-  withCredentials: true,
   transports: ["websocket"],
   auth: {
-    token:document.cookie
+    token: localStorage.getItem("accessToken")
   }
 });
 

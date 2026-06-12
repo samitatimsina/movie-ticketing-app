@@ -29,7 +29,6 @@ const StepOTP = ({ email, hash }) => {
           otp,
           hash, // ✅ must come from previous step
         }),
-        credentials: "include",
       });
 
       const data = await res.json();

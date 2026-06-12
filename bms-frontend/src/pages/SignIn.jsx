@@ -28,7 +28,6 @@ const handleSubmit = async (e) => {
       headers: {
         "Content-Type": "application/json",
       },
-      credentials: "include", // 🔥 important for cookie auth
       body: JSON.stringify({ email, password }),
     });
 
@@ -44,9 +43,10 @@ const handleSubmit = async (e) => {
 login(data.user);
 
 // save token if backend sends it
-if (data.token) {
-  localStorage.setItem("token", data.token);
-}
+if (data.accessToken || data.token) {
+        const token = data.accessToken || data.token;
+        localStorage.setItem("accessToken", token);
+      }
 
 toast.success("Signed in successfully!");
 

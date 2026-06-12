@@ -30,19 +30,13 @@ export const login = async (req: Request, res: Response) => {
 
     const result = await loginUser(email, password);
 
-    res.cookie("accessToken", result.token, {
-      httpOnly: true,
-      secure: false, // true in production
-      sameSite: "lax",
-      path:"/",
-      maxAge: 1000 * 60 * 60, // 1 hour
-    });
-
     res.status(200).json({
       success: true,
       message: "Login successful",
       user: result.user,
-      token:result.token,
+
+      // ✅ IMPORTANT: frontend will store this
+      accessToken: result.token,
     });
   } catch (err: any) {
     res.status(401).json({
@@ -99,9 +93,7 @@ export const verifyOTP = async (
     const { email, otp, hash } = req.body;
 
     if (!email || !otp || !hash) {
-      return next(
-        new createHttpError.BadRequest("All fields are required")
-      );
+      return next(new createHttpError.BadRequest("All fields are required"));
     }
 
     const [hashedOTP, expires] = hash.split(".");
@@ -118,10 +110,8 @@ export const verifyOTP = async (
       return next(new createHttpError.Unauthorized("Invalid OTP"));
     }
 
-    // Find existing user
     let user = await UserService.getUserByEmail(email);
 
-    // Create user if not exists
     if (!user) {
       user = await UserService.createUser({
         email,
@@ -129,47 +119,31 @@ export const verifyOTP = async (
       });
     }
 
-    // Activate user
     const updatedUser = await UserModel.findByIdAndUpdate(
       user._id,
       { activateUser: true },
       { new: true }
     );
 
-    // Generate tokens
+    // ✅ Generate tokens
     const { accessToken, refreshToken } =
       TokenService.generateToken({
         _id: String(user._id),
         email: user.email,
       });
 
-    // Store refresh token
-    await TokenService.storeRefreshToken(
-      String(user._id),
-      refreshToken
-    );
+    await TokenService.storeRefreshToken(String(user._id), refreshToken);
 
-    // Cookies
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      path:"/",
-      maxAge: 1000 * 60 * 60,
-    });
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      path:"/",
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-    });
+    // ❌ REMOVE COOKIES COMPLETELY
 
     res.status(200).json({
       success: true,
       message: "OTP verified successfully",
       user: updatedUser,
+
+      // ✅ send tokens to frontend
+      accessToken,
+      refreshToken,
     });
   } catch (error) {
     next(error);
@@ -182,14 +156,12 @@ export const logout = async (
   next: NextFunction
 ) => {
   try {
-    const refreshToken = req.cookies?.refreshToken;
+    const token =
+      req.headers.authorization?.split(" ")[1];
 
-    if (refreshToken) {
-      await TokenService.deleteRefreshToken(refreshToken);
+    if (token) {
+      await TokenService.deleteRefreshToken(token);
     }
-
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
 
     res.status(200).json({
       success: true,

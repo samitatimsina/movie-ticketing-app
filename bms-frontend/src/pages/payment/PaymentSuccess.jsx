@@ -33,12 +33,15 @@ const PaymentSuccess = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        credentials:"include",
         body: JSON.stringify({ data }),
       }
     );
 
     const result = await res.json();
+
+    if(result.success) {
+      navigate("/booking-history");
+    }
 
     if (!result.success) {
       alert("Payment verification failed");

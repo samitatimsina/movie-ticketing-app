@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AiOutlineArrowLeft } from "react-icons/ai";
 
@@ -8,25 +8,25 @@ const BookingHistory = () => {
 
 useEffect(() => {
   const fetchBookings = async () => {
+    const token = localStorage.getItem("accessToken");
     try {
-      const res = await fetch(
-        "http://localhost:9000/api/v1/booking/user",
-        {
-          credentials:"include",
-          cache:"no-store",
-          // method: "GET",
-          // headers: {
-          //   "Content-Type": "application/json",
-          //   Authorization: `Bearer ${token}`,
-          // },
-        }
-      );
+      const res = await fetch("http://localhost:9000/api/v1/booking/user", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
       const data = await res.json();
 
       console.log("BOOKINGS:", data);
 
-      setBookings(Array.isArray(data) ? data : []);
+      if (!res.ok || !Array.isArray(data)) {
+     setBookings([]);
+      return;
+    }
+    setBookings(data);
     } catch (err) {
       console.error("Failed to load bookings", err);
     }
@@ -81,14 +81,14 @@ useEffect(() => {
                 </p>
 
                 <p className="text-sm text-gray-500">
-                  Seats: {order.seats.join(", ")}
+                  Seats: {order.seats.join(", ") || "N/A"}
                 </p>
 
                 <p className="text-sm text-gray-500 font-semibold">
-                  Amount: Rs {500}
+                  Amount: Rs {order.totalAmount}
                 </p>
                 <p className="text-sm font-semibold">
-            Payment: {"Success "}
+            Payment :
             <span
               className={
                 order.paymentStatus === "completed"
