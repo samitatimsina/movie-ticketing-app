@@ -12,8 +12,20 @@ const payment_routes_1 = __importDefault(require("./routes/payment.routes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 // ✅ CORS (keep this for frontend communication)
+const allowedOrigins = [
+    "http://localhost:5173",
+    "https://movie-ticketing-app.vercel.app"
+];
 app.use((0, cors_1.default)({
-    origin: "http://localhost:5173"
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true
 }));
 // ✅ body parsers
 app.use(express_1.default.json());
