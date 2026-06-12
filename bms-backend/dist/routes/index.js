@@ -1,0 +1,24 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const movie_route_1 = __importDefault(require("../modules/movie/movie.route"));
+const theater_routes_1 = __importDefault(require("../modules/theater/theater.routes"));
+const show_routes_1 = __importDefault(require("../modules/show/show.routes"));
+const banner_route_1 = __importDefault(require("../modules/banner/banner.route"));
+const user_route_1 = __importDefault(require("../modules/user/user.route"));
+const auth_route_1 = __importDefault(require("../modules/auth/auth.route"));
+const booking_route_1 = __importDefault(require("../modules/booking/booking.route"));
+const payment_routes_1 = __importDefault(require("../routes/payment.routes"));
+const router = express_1.default.Router();
+router.use("/movies", movie_route_1.default);
+router.use("/theaters", theater_routes_1.default);
+router.use("/api/v1/shows", show_routes_1.default);
+router.use("/api/v1/banners", banner_route_1.default);
+router.use("/api/v1/booking", booking_route_1.default);
+router.use("/users", user_route_1.default);
+router.use("/auth", auth_route_1.default);
+router.use("/api/v1/payment", payment_routes_1.default);
+exports.default = router;

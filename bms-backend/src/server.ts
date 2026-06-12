@@ -1,5 +1,5 @@
 import app from "./app";
-import { config } from "./config/config";
+// import { config } from "./config/config";
 import connectDB from "./config/db";
 import showRoutes from "./modules/show/show.routes";
 import authRoutes from "./modules/auth/auth.route";
@@ -11,7 +11,7 @@ import paymentRoutes from "./routes/payment.routes";
 import { socketAuthMiddleware } from "./socket/socketAuth";
 
 const startServer = async () => {
-  const port = config.port;
+ const port = process.env.PORT || 9000;
 
   // Connect to database
   await connectDB();
@@ -22,7 +22,7 @@ const startServer = async () => {
   // Setup Socket.IO
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173","https://movie-ticketing-app.vercel.app/"],
     methods: ["GET", "POST"],
     credentials: false,
   },

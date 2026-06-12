@@ -10,4 +10,8 @@ server: {
       "/api": "http://localhost:9000",
     },
   },
+  build: {
+    sourcemap: false,
+    minify: "esbuild"
+  }
 });
