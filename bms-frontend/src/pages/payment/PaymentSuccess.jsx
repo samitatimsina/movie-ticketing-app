@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 const PaymentSuccess = () => {
   const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
   const handleContinue = () => {
     // Show dialog
@@ -25,8 +26,7 @@ const PaymentSuccess = () => {
 
     const token = localStorage.getItem("accessToken");
 
-    const res = await fetch(
-      `http://localhost:9000/api/v1/booking/verify/${bookingId}`,
+    const res = await fetch(`${BASE_URL}/api/v1/booking/verify/${bookingId}`,
       {
         method: "POST",
         headers: {

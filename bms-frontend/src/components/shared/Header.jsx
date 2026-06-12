@@ -18,6 +18,7 @@ const Header = ({onSearch}) => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [movies, setMovies] = useState([]);
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -35,7 +36,7 @@ const Header = ({onSearch}) => {
   useEffect(() => {
     const fetchMovies = async () => {
       try {
-        const res = await axios.get("http://localhost:9000/api/v1/movies");
+        const res = await axios.get(`${BASE_URL}/api/v1/movies`);
 
         setMovies(res.data?.data?.movies || res.data?.movies || []);
       } catch (err) {

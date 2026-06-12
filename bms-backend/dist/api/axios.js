@@ -6,5 +6,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.api = void 0;
 const axios_1 = __importDefault(require("axios"));
 exports.api = axios_1.default.create({
-    baseURL: "http://localhost:9000/api/v1",
+    baseURL: import.meta.env.VITE_BACKEND_URL,
 });

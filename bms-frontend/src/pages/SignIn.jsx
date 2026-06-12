@@ -13,6 +13,7 @@ const SignIn = () => {
 
   const searchParams = new URLSearchParams(location.search);
   const redirectTo = searchParams.get("redirect") || "/";
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -23,7 +24,7 @@ const handleSubmit = async (e) => {
   }
 
   try {
-    const res = await fetch("http://localhost:9000/api/v1/auth/login", {
+    const res = await fetch(`${BASE_URL}/api/v1/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

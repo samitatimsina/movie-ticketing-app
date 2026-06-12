@@ -5,12 +5,13 @@ import { AiOutlineArrowLeft } from "react-icons/ai";
 const BookingHistory = () => {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<any[]>([]);;
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 useEffect(() => {
   const fetchBookings = async () => {
     const token = localStorage.getItem("accessToken");
     try {
-      const res = await fetch("http://localhost:9000/api/v1/booking/user", {
+      const res = await fetch(`${BASE_URL}/booking/user`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

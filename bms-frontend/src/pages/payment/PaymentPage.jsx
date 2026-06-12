@@ -10,6 +10,7 @@ export default function MockPayment() {
 
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
   const handleSuccess = async () => {
     if (!name) return alert("Please enter your name");
@@ -17,8 +18,7 @@ export default function MockPayment() {
     setLoading(true);
 
     try {
-      await fetch(
-        `http://localhost:9000/api/v1/payment/verify/${bookingId}`,
+      await fetch(`${BASE_URL}/api/v1/payment/verify/${bookingId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
