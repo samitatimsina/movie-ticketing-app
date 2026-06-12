@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import { BookingModel } from "./booking.model";
 import Show from "../show/show.model";
 import mongoose from "mongoose";
-import { seatLocks } from "../../socket/socketHandlers"; // adjust path if needed
+import { seatLocks } from "../../socket/socketHandlers";
 
 export const createBooking: RequestHandler = async (req, res) => {
   const session = await mongoose.startSession();
@@ -28,9 +28,7 @@ export const createBooking: RequestHandler = async (req, res) => {
     }
 
     const seatIds = seats.map((s: any) => s.id);
-    // ===============================
-// SOCKET LOCK VALIDATION (IMPORTANT)
-// ===============================
+
 const showLocks = seatLocks.get(showId);
 
 if (showLocks) {
@@ -59,7 +57,6 @@ if (showLocks) {
   }
 }
 
-    // 🔥 STRONG CHECK (pending + completed both blocked)
     const activeBooking = await BookingModel.findOne({
       show: showId,
       paymentStatus: { $in: ["pending", "completed"] },
@@ -92,7 +89,7 @@ if (showLocks) {
       return;
     }
 
-    // 🔥 CREATE BOOKING (inside transaction)
+    //  CREATE BOOKING (inside transaction)
     const [booking] = await BookingModel.create(
       [
         {
@@ -130,9 +127,6 @@ if (showLocks) {
   }
 };
 
-// ================================
-// VERIFY PAYMENT (MOCK)
-// ================================
 export const verifyPayment: RequestHandler = async (req, res) => {
   try {
     const { bookingId } = req.params;
@@ -165,9 +159,6 @@ export const verifyPayment: RequestHandler = async (req, res) => {
   }
 };
 
-// ================================
-// GET USER BOOKINGS
-// ================================
 export const getUserBookings: RequestHandler = async (req, res) => {
   try {
     const userId = (req as any).user?.id || (req as any).user?._id;
@@ -206,9 +197,6 @@ export const getUserBookings: RequestHandler = async (req, res) => {
   }
 };
 
-// ================================
-// MOCK ESEWA REDIRECT
-// ================================
 export const proceedToEsewa: RequestHandler = async (req, res) => {
   const { bookingId, totalAmount } = req.body;
 

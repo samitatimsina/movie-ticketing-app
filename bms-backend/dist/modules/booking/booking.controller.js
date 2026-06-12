@@ -7,7 +7,7 @@ exports.proceedToEsewa = exports.getUserBookings = exports.verifyPayment = expor
 const booking_model_1 = require("./booking.model");
 const show_model_1 = __importDefault(require("../show/show.model"));
 const mongoose_1 = __importDefault(require("mongoose"));
-const socketHandlers_1 = require("../../socket/socketHandlers"); // adjust path if needed
+const socketHandlers_1 = require("../../socket/socketHandlers");
 const createBooking = async (req, res) => {
     const session = await mongoose_1.default.startSession();
     session.startTransaction();
@@ -27,9 +27,6 @@ const createBooking = async (req, res) => {
             return;
         }
         const seatIds = seats.map((s) => s.id);
-        // ===============================
-        // SOCKET LOCK VALIDATION (IMPORTANT)
-        // ===============================
         const showLocks = socketHandlers_1.seatLocks.get(showId);
         if (showLocks) {
             const now = Date.now();
@@ -51,7 +48,6 @@ const createBooking = async (req, res) => {
                 return;
             }
         }
-        // 🔥 STRONG CHECK (pending + completed both blocked)
         const activeBooking = await booking_model_1.BookingModel.findOne({
             show: showId,
             paymentStatus: { $in: ["pending", "completed"] },
@@ -78,7 +74,7 @@ const createBooking = async (req, res) => {
             });
             return;
         }
-        // 🔥 CREATE BOOKING (inside transaction)
+        //  CREATE BOOKING (inside transaction)
         const [booking] = await booking_model_1.BookingModel.create([
             {
                 user: userId,
@@ -109,9 +105,6 @@ const createBooking = async (req, res) => {
     }
 };
 exports.createBooking = createBooking;
-// ================================
-// VERIFY PAYMENT (MOCK)
-// ================================
 const verifyPayment = async (req, res) => {
     try {
         const { bookingId } = req.params;
@@ -139,9 +132,6 @@ const verifyPayment = async (req, res) => {
     }
 };
 exports.verifyPayment = verifyPayment;
-// ================================
-// GET USER BOOKINGS
-// ================================
 const getUserBookings = async (req, res) => {
     try {
         const userId = req.user?.id || req.user?._id;
@@ -174,9 +164,6 @@ const getUserBookings = async (req, res) => {
     }
 };
 exports.getUserBookings = getUserBookings;
-// ================================
-// MOCK ESEWA REDIRECT
-// ================================
 const proceedToEsewa = async (req, res) => {
     const { bookingId, totalAmount } = req.body;
     if (!bookingId || !totalAmount) {

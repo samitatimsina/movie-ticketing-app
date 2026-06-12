@@ -77,7 +77,7 @@ const handleCheckout = async () => {
   console.log("FINAL TOTAL:", total);
   try {
     const res = await axiosWrapper.post(
-      "/booking/create",
+      "api/v1/booking/create",
       {
         showId: showData._id,
         seats: selectedSeats,

@@ -11,7 +11,7 @@ useEffect(() => {
   const fetchBookings = async () => {
     const token = localStorage.getItem("accessToken");
     try {
-      const res = await fetch(`${BASE_URL}/booking/user`, {
+      const res = await fetch(`${BASE_URL}/api/v1/booking/user`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
