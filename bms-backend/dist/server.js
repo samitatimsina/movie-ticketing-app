@@ -23,7 +23,7 @@ const startServer = async () => {
     // Setup Socket.IO
     const io = new socket_io_1.Server(httpServer, {
         cors: {
-            origin: ["http://localhost:5173", "https://movie-ticketing-app.vercel.app/"],
+            origin: "https://movie-ticketing-app.vercel.app/",
             methods: ["GET", "POST"],
             credentials: false,
         },
