@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { getShowsByMoviesAndLocation } from "../apis";
 import { useNavigate } from "react-router-dom";
 
-// Generate next N days dynamically
 const generateDates = (days = 7) =>
   Array.from({ length: days }, (_, i) => {
     const date = dayjs().add(i, "day");
@@ -42,7 +41,6 @@ export default function ShowtimesSection({ movieId, location }) {
     enabled: !!movieId && !!safeLocation,
   });
 
-  // Group shows by theatre name
   const groupedShows = showData.reduce((acc, show) => {
     const theatreName = show.theater?.name || show.theatre?.name || "Unknown";
     if (!acc[theatreName]) acc[theatreName] = [];

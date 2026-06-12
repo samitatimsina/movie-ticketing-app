@@ -38,8 +38,6 @@ const handleSubmit = async (e) => {
       return;
     }
 
-    // backend returns user
-    // save user in context
 login(data.user);
 
 // save token if backend sends it

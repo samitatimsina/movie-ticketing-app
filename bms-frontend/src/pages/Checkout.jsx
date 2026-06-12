@@ -228,29 +228,6 @@ const handleCheckout = async () => {
           </div>
         </div>
       </div>
-
-      {/* PAYMENT MODAL */}
-      {/* {paymentModal && (
-      <PaymentModal
-        type={paymentModal}
-        bookingId={bookingData.bookingId}
-        amount={bookingData.amount}
-        onClose={() => setPaymentModal(null)}
-        onSuccess={async () => {
-          try {
-            await api.post("/booking/confirm",bookingData);
-
-            toast.success("Payment successful!");
-            navigate("/profile/orders");
-          } catch (err) {
-            toast.error("Payment verification failed");
-          }
-        }}
-        onRetry={() => {
-          setPaymentModal("esewa");
-        }}
-      />
-    )} */}
   </div>
 );
 };
