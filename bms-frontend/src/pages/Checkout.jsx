@@ -10,7 +10,7 @@ import { useSeatContext } from "../context/SeatContext";
 import toast from "react-hot-toast";
 import { socket } from "../utils/socket";
 import PaymentModal from "../components/PaymentModal";
-import { axiosWrapper } from "../apis";
+import { axiosWrapper } from "../apis/axiosWrapper";
 
 const Checkout = () => {
   const navigate = useNavigate();
