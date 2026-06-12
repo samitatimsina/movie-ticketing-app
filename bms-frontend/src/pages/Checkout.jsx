@@ -10,7 +10,7 @@ import { useSeatContext } from "../context/SeatContext";
 import toast from "react-hot-toast";
 import { socket } from "../utils/socket";
 import PaymentModal from "../components/PaymentModal";
-import {api} from "../../../bms-backend/src/api/axios";
+import { axiosWrapper } from "../apis";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -76,7 +76,7 @@ const handleCheckout = async () => {
   const token = localStorage.getItem("accessToken");
   console.log("FINAL TOTAL:", total);
   try {
-    const res = await api.post(
+    const res = await axiosWrapper.post(
       "/booking/create",
       {
         showId: showData._id,

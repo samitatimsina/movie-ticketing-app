@@ -103,7 +103,7 @@ export default function MockPayment() {
 
         {/* FOOTER */}
         <p className="text-xs text-center text-gray-400 mt-4">
-            Copyright to Samita Timsina and Prabdhi Pokharel
+            Copyright to Samita Timsina
         </p>
 
       </div>
