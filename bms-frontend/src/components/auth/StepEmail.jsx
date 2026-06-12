@@ -13,7 +13,6 @@ const StepEmail = ({ onNext }) => {
         return;
     }
 
-    // pass email to next step (OTP / login)
     onNext(email);
   };
 
